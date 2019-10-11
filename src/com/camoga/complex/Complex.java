@@ -11,10 +11,8 @@ public class Complex {
 	public static final Complex ONE = new Complex(1,0);
 	public static final Complex ZERO = new Complex(0,0);
 	public static final Complex I = new Complex(0,1);
+	public static final Complex INFINITY = new Complex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 	
-	public static void main(String[] args) {
-		System.out.println(parseComplex("3i+2+4i"));
-	}
 	private double r, i;
 	
 	public Complex() {
@@ -65,7 +63,7 @@ public class Complex {
 	}
 	
 	/**
-	 * ln(z)
+	 * principal value of ln(z)
 	 * @param z
 	 * @return
 	 */
@@ -99,14 +97,7 @@ public class Complex {
 	 */
 	public static Complex exp(Complex z) {
 		return mul(valueOf(Math.exp(z.r)), euler(z.i));
-	}
-	
-	public static Complex cos2(Complex z) {
-		Complex eiz = euler(z);
-		Complex eiz2 = reciprocal(eiz);
-		return mul(add(eiz, eiz2), valueOf(0.5));
-	}
-	
+	}	
 	
 	/**
 	 * cos(z)
@@ -116,7 +107,6 @@ public class Complex {
 	public static Complex cos(Complex z) {
 		return new Complex(Math.cos(z.r)*Math.cosh(z.i), -Math.sin(z.r)*Math.sinh(z.i));
 	}
-	
 	
 	/**
 	 * sin(z)
@@ -145,7 +135,6 @@ public class Complex {
 	
 	public static Complex acos(Complex z) {
 		return sub(valueOf(PI/2), asin(z));
-		//return mul(new Complex(0,-1), ln(add(z, sqrt(sub(pow(z,valueOf(2)), ONE)))));
 	}
 	
 	public static Complex asin(Complex z) {
@@ -169,7 +158,6 @@ public class Complex {
 	}
 	
 	public static Complex atanh(Complex z) {
-//		return div(atan(mul(I, z)), I);
 		return mul(valueOf(0.5), sub(ln(add(ONE, z)), ln(sub(ONE, z))));
 	}
 	
@@ -221,6 +209,11 @@ public class Complex {
 	 */
 	public static Complex pow(Complex z, Complex w) {
 		double modz = mod(z);
+		if(modz == 0) {
+			if(w.i == 0 && w.r == 0) return ONE;
+			else if(w.r == -1 && w.i == 0) return INFINITY;
+			else return ZERO;
+		}
 		double argz = argument(z);
 		// (r*e^ia)^(c+di)= r^c*e^(iac) * e^(ln(r)*di)*e^(-ad)
 		//real product
@@ -247,11 +240,46 @@ public class Complex {
 	public static Complex riemannzetareal(Complex z, int it) {
 //		if(z.r <= 1) return valueOf(0);
 		Complex result = new Complex();
-		for(int i = 1; i < it; i++) {
-			result = add(result, pow(valueOf(i), mul(z, valueOf(-1))));
+		if(z.r > 1) {
+			for(int i = 1; i < it; i++) {
+				result = add(result, pow(valueOf(i), mul(z, valueOf(-1))));
+			}
+		} else if(z.r > 0 && z.r < 1) {
+			for(int i = 1; i < it; i++) {
+				result = add(result, mul(valueOf(i%2==0 ? -1:1), pow(valueOf(i), mul(z, valueOf(-1)))));
+			}
+			Complex lastIt = add(result, mul(valueOf((it)%2==0 ? -1:1), pow(valueOf(it+1), mul(z, valueOf(-1)))));
+			
+			Complex factor = reciprocal(sub(ONE, pow(valueOf(2), sub(ONE, z))));
+			result = div(add(result, lastIt), 2);
+			
+			result = mul(result, factor);
 		}
-		
 		return result;
+	}
+	
+	/**
+	 * 
+	 * @param n
+	 * @return gamma(n)
+	 */
+	public static Complex gamma(Complex n) {
+		double dt = 0.001;
+		n = sub(n, ONE);
+		
+		Complex dexp = exp(valueOf(-dt));
+		Complex exp = ONE;
+		
+		Complex sum = ZERO;
+		
+		for(double t = 0; t < 30; t+=dt) {
+			sum = add(sum, mul(exp,pow(valueOf(t), n)));
+			exp = mul(exp, dexp);
+//			System.out.println(t);
+		}
+		sum = mul(sum, valueOf(dt));
+
+		return sum;		
 	}
 	
 	/**
@@ -311,7 +339,7 @@ public class Complex {
 	 * @param s
 	 * @return
 	 */
-	public static Complex parseComplex(String s) {
+	public static Complex parseComplex(String s) { // basura
 		s = s.replace(" ", "");
 		
 		String real = "";
