@@ -249,11 +249,7 @@ public class Complex {
 	 */
 	public static Complex zeta(Complex s, int it) {
 		Complex result = new Complex();
-		if(s.r >= 1) {
-			for(int i = 1; i < it; i++) {
-				result = add(result, pow(valueOf(i), mul(s, valueOf(-1))));
-			}
-		} else if(s.r > 0 && s.r < 1) {
+		if(s.r > 0) {
 			for(int i = 1; i < it; i++) {
 				result = add(result, mul(valueOf(i%2==0 ? -1:1), pow(valueOf(i), mul(s, valueOf(-1)))));
 			}
@@ -293,6 +289,10 @@ public class Complex {
 		Complex result = div(mul(sum, pow(add(z, valueOf(5.5)), add(z, valueOf(0.5))), reciprocal(exp(add(z,valueOf(5.5))))), prod);
 		
 		return result;
+	}
+	
+	public static Complex beta(Complex x, Complex y) {
+		return div(mul(gamma(x), gamma(y)), gamma(add(x,y)));
 	}
 	
 	/**
