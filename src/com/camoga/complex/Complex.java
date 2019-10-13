@@ -1,6 +1,5 @@
 package com.camoga.complex;
 
-import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
 
 import java.util.regex.Matcher;
@@ -11,7 +10,7 @@ public class Complex {
 //	public static final Complex ONE = new Complex(1,0);
 //	public static final Complex ZERO = new Complex(0,0);
 	public static final Complex I = new Complex(0,1);
-	public static final Complex EULERGAMMA = new Complex(-0.5772156649015328606065,0);
+	public static final Complex EULERGAMMA = new Complex(0.5772156649015328606065,0);
 	public static final Complex PI = new Complex(Math.PI, 0);
 	public static final Complex INFINITY = new Complex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 	
@@ -39,14 +38,12 @@ public class Complex {
 		return new Complex(w.r-z.r,w.i-z.i);
 	}
 	
-	public static Complex mul(Complex w, Complex z) {
-		return new Complex(w.r*z.r-w.i*z.i,w.r*z.i+z.r*w.i);
-	}
-	
 	public static Complex mul(Complex ...zs) {
-		Complex result = valueOf(1);
-		for(Complex z : zs) result = mul(result, z);
-		return result;
+		Complex r = valueOf(1);
+		for(Complex z : zs) {
+			r = new Complex(r.r*z.r-r.i*z.i, r.r*z.i+z.r*r.i);
+		}
+		return r;
 	}
 	
 	public static Complex div(Complex w, Complex z) {
@@ -67,7 +64,8 @@ public class Complex {
 	}
 	
 	/**
-	 * (a^2+b^2)
+	 * a^2+b^2
+	 * 
 	 * @param z
 	 * @return
 	 */
@@ -85,12 +83,12 @@ public class Complex {
 	}
 	
 	/**
-	 * e^iphi = cos(phi) + isin(phi)
-	 * @param phi argument
+	 * e^ix = cos(x) + isin(x)
+	 * @param x argument
 	 * @return
 	 */
-	public static Complex euler(double phi) {
-		return new Complex(Math.cos(phi), Math.sin(phi));
+	public static Complex euler(double x) {
+		return new Complex(Math.cos(x), Math.sin(x));
 	}
 	
 	/**
@@ -194,7 +192,7 @@ public class Complex {
 	}
 	
 	/**
-	 * logb (z)
+	 * logb(z)
 	 * @param z
 	 * @param base
 	 * @return
@@ -268,8 +266,8 @@ public class Complex {
 	
 	/**
 	 * Gamma function
-	 * @param n
-	 * @return gamma(n)
+	 * @param z
+	 * @return gamma(z)
 	 */	
 	public static Complex gamma(Complex z) {
 		if(z.real() < 0.5) return div(PI, mul(sin(mul(PI,z)), gamma(sub(valueOf(1), z))));
@@ -306,7 +304,7 @@ public class Complex {
 	 * LogGamma Function
 	 * This function is similar to ln(gamma(z)) but with a single branch cut along the negative real axis
 	 * @param z
-	 * @param it iterations
+	 * @param it
 	 * @return
 	 */
 	public static Complex logGamma(Complex z, int it) {
@@ -317,7 +315,7 @@ public class Complex {
 			sum = add(sum, d, negate(ln(add(valueOf(1),d))));
 		}
 		
-		return add(negate(ln(z)), mul(EULERGAMMA, z), sum);
+		return add(negate(ln(z)), mul(negate(EULERGAMMA), z), sum);
 	}
 	
 	/**
@@ -329,13 +327,35 @@ public class Complex {
 	public static Complex digamma(Complex z, int it) {
 		Complex sum = new Complex();
 		
-		for(int k = 1; k < it; k++) {
-			sum = add(sum, valueOf(1/(double)k), negate(reciprocal(add(valueOf(k),z))));
+		for(int k = 0; k < it; k++) {
+			sum = add(sum, valueOf(1/(double)(k+1)), negate(reciprocal(add(valueOf(k),z))));
 		}
 		
-		return add(negate(reciprocal(z)), EULERGAMMA, sum);
+		return add(negate(EULERGAMMA), sum);
 	}
 	
+	public static Complex trigamma(Complex z, int it) {
+		return polygamma(z, 1, it);
+	}
+	
+	public static Complex polygamma(Complex z, int n, int it) {
+		if(n == 0) return digamma(z, it);
+		Complex sum = new Complex();
+		Complex sign = n%2==0 ? valueOf(-1):valueOf(1);
+		
+		for(int k = 0; k < it; k++) {
+			sum = add(sum, reciprocal(pow(add(z,valueOf(k)), n+1)));
+		}
+		
+		return mul(sign, factorial(n), sum);
+	}
+	
+	/**
+	 * gamma(x)gamma(y)/gamma(x+y)
+	 * @param x
+	 * @param y
+	 * @return
+	 */
 	public static Complex beta(Complex x, Complex y) {
 		return div(mul(gamma(x), gamma(y)), gamma(add(x,y)));
 	}
@@ -349,6 +369,19 @@ public class Complex {
 		return div(valueOf(1), z);
 	}
 	
+	public static Complex factorial(int n) {
+		double result = 1;
+		for(int i = 1; i <= n; i++) {
+			result *= i;
+		}
+		return valueOf(result);
+	}
+	
+	/**
+	 * -z
+	 * @param z
+	 * @return
+	 */
 	public static Complex negate(Complex z) {
 		return new Complex(-z.r, -z.i);
 	}
@@ -375,7 +408,7 @@ public class Complex {
 		String result = "";
 		if(i==0) result += r;
 		else if(r==0) result += (i==1 ? "":i)+"i";
-		else result += (r) + (i >= 0 ? (i == 0 ? (""):(" + " + (i==1 ? "":i)+"i")):(" - " + (i==-1 ? "":-i)+"i"));
+		else result += r + (i >= 0 ? (i == 0 ? (""):(" + " + (i==1 ? "":i)+"i")):(" - " + (i==-1 ? "":-i)+"i"));
 		return result;
 	}
 
@@ -388,16 +421,24 @@ public class Complex {
 		return Math.sqrt(modSq(z));
 	}
 	
+	/**
+	 * Re(z)
+	 * @return
+	 */
 	public double real() {
 		return r;
 	}
 	
+	/**
+	 * Im(z)
+	 * @return
+	 */
 	public double imaginary() {
 		return i;
 	}
 
 	/**
-	 * Returns a new double initialized to the value given by the String
+	 * Returns a new Complex initialized to the value given by the String
 	 * @param s
 	 * @return
 	 */
