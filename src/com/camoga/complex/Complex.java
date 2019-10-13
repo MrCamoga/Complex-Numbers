@@ -8,10 +8,11 @@ import java.util.regex.Pattern;
 
 public class Complex {
 
-//	public static final Complex valueOf(1) = new Complex(1,0);
-//	public static final Complex valueOf(0) = new Complex(0,0);
-//	public static final Complex I = new Complex(0,1);
-//	public static final Complex PI = new Complex(Math.PI, 0);
+//	public static final Complex ONE = new Complex(1,0);
+//	public static final Complex ZERO = new Complex(0,0);
+	public static final Complex I = new Complex(0,1);
+	public static final Complex EULERGAMMA = new Complex(-0.5772156649015328606065,0);
+	public static final Complex PI = new Complex(Math.PI, 0);
 	public static final Complex INFINITY = new Complex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 	
 	private double r, i;
@@ -98,7 +99,7 @@ public class Complex {
 	 * @return
 	 */
 	public static Complex euler(Complex z) {
-		return exp(mul(z, new Complex(0,1)));
+		return exp(mul(z, I));
 	}
 	
 	/**
@@ -133,15 +134,15 @@ public class Complex {
 	}
 	
 	public static Complex cosh(Complex z) {
-		return cos(mul(new Complex(0,1), z));
+		return cos(mul(I, z));
 	}
 
 	public static Complex sinh(Complex z) {
-		return mul(new Complex(0,-1), sin(mul(new Complex(0,1), z)));
+		return mul(new Complex(0,-1), sin(mul(I, z)));
 	}
 	
 	public static Complex tanh(Complex z) {
-		return mul(new Complex(0,-1), tan(mul(new Complex(0,1), z)));
+		return mul(new Complex(0,-1), tan(mul(I, z)));
 	}
 	
 	public static Complex acos(Complex z) {
@@ -149,11 +150,11 @@ public class Complex {
 	}
 	
 	public static Complex asin(Complex z) {
-		return mul(new Complex(0,-1), ln(add(mul(z,new Complex(0,1)), sqrt(sub(valueOf(1), pow(z,2))))));
+		return mul(negate(PI), ln(add(mul(z,PI), sqrt(sub(valueOf(1), pow(z,2))))));
 	}
 	
 	public static Complex atan(Complex z) {
-		return mul(valueOf(0.5), mul(new Complex(0,1), sub(ln(sub(valueOf(1),mul(new Complex(0,1), z))), ln(add(valueOf(1), mul(new Complex(0,1), z))))));
+		return mul(valueOf(0.5), mul(PI, sub(ln(sub(valueOf(1),mul(PI, z))), ln(add(valueOf(1), mul(PI, z))))));
 	}
 	
 	public static Complex asec(Complex z) {
@@ -244,7 +245,7 @@ public class Complex {
 	/**
 	 * Riemann Zeta function
 	 * @param s
-	 * @param it
+	 * @param it not recommended less than 100
 	 * @return
 	 */
 	public static Complex zeta(Complex s, int it) {
@@ -260,7 +261,7 @@ public class Complex {
 			
 			result = mul(result, factor);
 		} else {
-			result = mul(pow(valueOf(2*Math.PI), s),valueOf(1/PI),sin(mul(s, valueOf(Math.PI/2))), gamma(sub(valueOf(1), s)), zeta(sub(valueOf(1), s), it));
+			result = mul(pow(valueOf(2*Math.PI), s),reciprocal(PI),sin(mul(s, valueOf(Math.PI/2))), gamma(sub(valueOf(1), s)), zeta(sub(valueOf(1), s), it));
 		}
 		return result;
 	}
@@ -271,7 +272,7 @@ public class Complex {
 	 * @return gamma(n)
 	 */	
 	public static Complex gamma(Complex z) {
-		if(z.real() < 0.5) return div(valueOf(PI), mul(sin(mul(valueOf(PI),z)), gamma(sub(valueOf(1), z))));
+		if(z.real() < 0.5) return div(PI, mul(sin(mul(PI,z)), gamma(sub(valueOf(1), z))));
 		
 		double[] q = new double[]{75122.6331530, 80916.6278952, 36308.2951477, 8687.24529705, 1168.92649479, 83.8676043424, 2.50662827511};
 		
@@ -289,6 +290,50 @@ public class Complex {
 		Complex result = div(mul(sum, pow(add(z, valueOf(5.5)), add(z, valueOf(0.5))), reciprocal(exp(add(z,valueOf(5.5))))), prod);
 		
 		return result;
+	}
+	
+	/**
+	 * Derivative of the gamma function
+	 * @param z
+	 * @param it
+	 * @return
+	 */
+	public static Complex gammaDerivative(Complex z, int it) {
+		return mul(gamma(z), digamma(z,it));
+	}
+	
+	/**
+	 * LogGamma Function
+	 * This function is similar to ln(gamma(z)) but with a single branch cut along the negative real axis
+	 * @param z
+	 * @param it iterations
+	 * @return
+	 */
+	public static Complex logGamma(Complex z, int it) {
+		Complex sum = new Complex();
+		
+		for(int k = 1; k < it; k++) {
+			Complex d = div(z, k);
+			sum = add(sum, d, negate(ln(add(valueOf(1),d))));
+		}
+		
+		return add(negate(ln(z)), mul(EULERGAMMA, z), sum);
+	}
+	
+	/**
+	 * Digamma function
+	 * @param z
+	 * @param it
+	 * @return
+	 */
+	public static Complex digamma(Complex z, int it) {
+		Complex sum = new Complex();
+		
+		for(int k = 1; k < it; k++) {
+			sum = add(sum, valueOf(1/(double)k), negate(reciprocal(add(valueOf(k),z))));
+		}
+		
+		return add(negate(reciprocal(z)), EULERGAMMA, sum);
 	}
 	
 	public static Complex beta(Complex x, Complex y) {
