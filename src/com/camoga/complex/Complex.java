@@ -252,10 +252,11 @@ public class Complex {
 			for(int i = 1; i < it; i++) {
 				result = add(result, mul(valueOf(i%2==0 ? -1:1), pow(valueOf(i), mul(s, valueOf(-1)))));
 			}
-			Complex lastIt = add(result, mul(valueOf((it)%2==0 ? -1:1), pow(valueOf(it+1), mul(s, valueOf(-1)))));
+			Complex an1 = mul(valueOf((it)%2==0 ? -1:1), pow(valueOf(it), mul(s, valueOf(-1))));
+			Complex an2 = mul(valueOf((it+1)%2==0 ? -1:1), pow(valueOf(it+1), mul(s, valueOf(-1))));
 			
+			result = add(result, mul(valueOf(0.75), an1), mul(valueOf(0.25), an2)); // mean of partial sums Sn, Sn+1 & Sn+2 (((Sn+Sn1)/2 + (Sn1+Sn2)/2)/2)
 			Complex factor = reciprocal(sub(valueOf(1), pow(valueOf(2), sub(valueOf(1), s))));
-			result = div(add(result, lastIt), 2);
 			
 			result = mul(result, factor);
 		} else {
