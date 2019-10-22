@@ -11,6 +11,7 @@ public class Complex {
 //	public static final Complex ZERO = new Complex(0,0);
 	public static final Complex I = new Complex(0,1);
 	public static final Complex EULERGAMMA = new Complex(0.5772156649015328606065,0);
+	public static final Complex LN2 = new Complex(0.69314718055994530941, 0);
 	public static final Complex PI = new Complex(Math.PI, 0);
 	public static final Complex INFINITY = new Complex(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 	
@@ -127,6 +128,18 @@ public class Complex {
 		return new Complex(Math.sin(z.r)*Math.cosh(z.i), Math.cos(z.r)*Math.sinh(z.i));
 	}
 	
+	public static Complex lnSin(Complex z) {
+		if(z.i > 20) return new Complex(z.i - LN2.r, (Math.PI*3.5+(-z.r)%(Math.PI*2))%(Math.PI*2)-Math.PI);
+		if(z.i < -20) return new Complex(-z.i - LN2.r, (Math.PI*2.5+(z.r)%(Math.PI*2))%(Math.PI*2)-Math.PI);
+		return ln(sin(z));
+	}
+	
+	public static Complex lnCos(Complex z) {
+		if(z.i > 20) return new Complex(z.i - LN2.r, (Math.PI*3+(-z.r)%(Math.PI*2))%(Math.PI*2)-Math.PI);
+		if(z.i < -20) return new Complex(-z.i - LN2.r, (Math.PI*3+(z.r)%(Math.PI*2))%(Math.PI*2)-Math.PI);
+		return ln(cos(z));
+	}
+	
 	public static Complex tan(Complex z) {
 		return div(sin(z), cos(z));
 	}
@@ -152,7 +165,7 @@ public class Complex {
 	}
 	
 	public static Complex atan(Complex z) {
-		return mul(valueOf(0.5), mul(PI, sub(ln(sub(valueOf(1),mul(PI, z))), ln(add(valueOf(1), mul(PI, z))))));
+		return mul(new Complex(0,-0.5), ln(div(add(valueOf(1),mul(z,I)), sub(valueOf(1), mul(z,I)))));
 	}
 	
 	public static Complex asec(Complex z) {
@@ -218,17 +231,12 @@ public class Complex {
 	 * @return
 	 */
 	public static Complex pow(Complex z, Complex w) {
-		double modz = mod(z);
-		if(modz == 0) {
+		if(modSq(z) == 0) {
 			if(w.i == 0 && w.r == 0) return valueOf(1);
 			else if(w.r == -1 && w.i == 0) return INFINITY;
 			else return valueOf(0);
 		}
-		double argz = argument(z);
-		// (r*e^ia)^(c+di)= r^c*e^(iac) * e^(ln(r)*di)*e^(-ad)
-		double real = Math.pow(modz, w.r)*Math.exp(-argz*w.i);
-		Complex c = euler(Math.log(modz)*w.i+argz*w.r);
-		return mul(c, valueOf(real));
+		return exp(mul(ln(z),w));
 	}
 	
 	/**
@@ -257,12 +265,24 @@ public class Complex {
 			
 			result = add(result, mul(valueOf(0.75), an1), mul(valueOf(0.25), an2)); // mean of partial sums Sn, Sn+1 & Sn+2 (((Sn+Sn1)/2 + (Sn1+Sn2)/2)/2)
 			Complex factor = reciprocal(sub(valueOf(1), pow(valueOf(2), sub(valueOf(1), s))));
-			
+		
 			result = mul(result, factor);
 		} else {
 			result = mul(pow(valueOf(2*Math.PI), s),reciprocal(PI),sin(mul(s, valueOf(Math.PI/2))), gamma(sub(valueOf(1), s)), zeta(sub(valueOf(1), s), it));
+//			result = exp(add(mul(s, valueOf(Math.log(2*Math.PI))), 
+//					valueOf(-Math.log(Math.PI)),
+//					lnSin(mul(s, valueOf(Math.PI/2))),
+//					logGamma(sub(valueOf(1), s), it),
+//					ln(zeta(sub(valueOf(1), s), it))
+//					));
 		}
 		return result;
+	}
+	
+	public static Complex xi(Complex s, int it) {
+		if(s.r >= 0) {
+			return mul(valueOf(0.5), s, sub(s, valueOf(1)), pow(PI, mul(s, valueOf(-0.5))), gamma(mul(s, valueOf(0.5))), zeta(s, it));
+		} else return xi(sub(valueOf(1), s), it);
 	}
 	
 	/**
